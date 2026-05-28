@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>COMMAND CENTER</title>
+
+    <style>
+        :root {
+            --bg: #060810;
+            --surface: #0d1117;
+            --surface2: #161b24;
+            --border: #1e2733;
+            --border2: #252d3a;
+            --text: #e8edf5;
+            --muted: #4a5568;
+            --blue: #3b82f6;
+            --orange: #f97316;
+            --emerald: #10b981;
+            --red: #ef4444;
+            --yellow: #eab308;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            padding: 1.25rem 1rem 7rem;
+            overflow-x: hidden;
+        }
+
+        /* Noise overlay for texture */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 0; opacity: 0.4;
+        }
+
+        /* Glowing orb background */
+        body::after {
+            content: '';
+            position: fixed;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%);
+            top: -200px; right: -200px;
+            pointer-events: none; z-index: 0;
+            border-radius: 50%;
+        }
+
+        /* === HEADER === */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1.5rem;
+            position: relative; z-index: 1;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 2.8rem;
+            letter-spacing: 0.05em;
+            line-height: 1;
+            background: linear-gradient(135deg, #fff 40%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-sub {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.6rem;
+            color: var(--blue);
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .header-right { text-align: right; }
+        .aspiration { font-size: 0.65rem; color: var(--orange); font-weight: 700; letter-spacing: 0.05em; }
+        .aspiration-label { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; font-family: 'SF Mono', 'Consolas', monospace; }
+
+        /* === GRID === */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            position: relative; z-index: 1;
+        }
+        @media (min-width: 768px) {
+            .main-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (min-width: 1200px) {
+            .main-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        /* === CARDS === */
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        }
+        .card:hover { border-color: var(--border2); }
+
+        .card-accent-blue { border-left: 3px solid var(--blue); }
+        .card-accent-orange { border-left: 3px solid var(--orange); }
+        .card-accent-emerald { border-left: 3px solid var(--emerald); }
+        .card-accent-red { border-left: 3px solid var(--red); }
+        .card-accent-yellow { border-left: 3px solid var(--yellow); }
+        .section-label.yellow { color: var(--yellow); }
+
+        /* === SECTION LABELS === */
+        .section-label {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.6rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-label.blue { color: var(--blue); }
+        .section-label.orange { color: var(--orange); }
+        .section-label.emerald { color: var(--emerald); }
+        .section-label.red { color: var(--red); }
+        .section-label.indigo { color: #818cf8; }
+
+        /* === CHECKLIST === */
+        .task-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface2);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+            margin-bottom: 0.5rem;
+            user-select: none;
+        }
+        .task-row:hover { background: #1a2130; border-color: var(--border2); }
+        .task-row.done { background: rgba(59,130,246,0.07); border-color: rgba(59,130,246,0.2); }
+        .task-row.done .task-label { color: var(--muted); text-decoration: line-through; }
+
+        .task-label { font-size: 0.8rem; font-weight: 600; transition: color 0.15s; }
+
+        .checkbox {
+            width: 26px; height: 26px;
+            border-radius: 7px;
+            border: 2px solid var(--border2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .checkbox.checked {
+            background: var(--blue);
+            border-color: var(--blue);
+            box-shadow: 0 0 12px rgba(59,130,246,0.4);
+            transform: scale(1.05);
+        }
+
+        /* === STREAK CARDS === */
+        .streak-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+        }
+
+        .streak-card {
+            background: var(--surface2);
+            border-radius: 12px;
+            padding: 0.85rem;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+            user-select: none;
+        }
+        .streak-card:hover { border-color: var(--border2); }
+        .streak-card.active { border-color: var(--orange); background: rgba(249,115,22,0.08); }
+        .streak-card.active .streak-name { color: var(--orange); }
+        .streak-card.complete { border-color: var(--emerald); background: rgba(16,185,129,0.08); }
+
+        .streak-name { font-size: 0.6rem; font-family: 'SF Mono', 'Consolas', monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.35rem; transition: color 0.15s; }
+        .streak-val { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 1.8rem; line-height: 1; color: white; }
+        .streak-target { font-size: 0.6rem; color: var(--muted); }
+
+        .progress-bar {
+            width: 100%; height: 3px;
+            background: var(--border2);
+            border-radius: 99px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--orange);
+            border-radius: 99px;
+            transition: width 0.4s ease;
+        }
+        .progress-fill.complete { background: var(--emerald); }
+
+        /* === NUTRITION === */
+        .fuel-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .fuel-btn {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.65rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            cursor: pointer;
+            transition: all 0.15s;
+            letter-spacing: 0.05em;
+        }
+        .fuel-btn:hover { background: #1a2130; border-color: var(--border2); }
+        .fuel-btn:active { transform: scale(0.97); }
+        .fuel-btn.water { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.25); color: #93c5fd; }
+        .fuel-btn.carb { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.25); color: #fed7aa; }
+
+        .custom-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        input[type="number"], input[type="text"], select {
+            background: var(--surface2) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--border2) !important;
+            border-radius: 10px;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.75rem;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.15s;
+            -webkit-appearance: none;
+        }
+        input:focus, select:focus { border-color: var(--blue) !important; }
+        input::placeholder { color: var(--muted); }
+
+        .macro-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+
+        .macro-cell {
+            background: rgba(13,17,23,0.8);
+            border-radius: 12px;
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .macro-label {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.55rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.25rem;
+        }
+
+        .macro-val {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 1.6rem;
+            line-height: 1;
+            color: white;
+        }
+        .macro-val.warn { color: var(--red); }
+        .macro-val.ok { color: var(--emerald); }
+        .macro-val.blue { color: #60a5fa; }
+
+        .macro-unit { font-size: 0.65rem; color: var(--muted); }
+
+        /* === BUTTONS === */
+        .btn-primary {
+            background: var(--blue);
+            color: white;
+            padding: 0.7rem 1rem;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-primary:active { transform: scale(0.97); }
+
+        .btn-sm {
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 8px;
+            padding: 0.35rem 0.75rem;
+            border: 1px solid;
+            transition: all 0.15s;
+            font-family: 'SF Mono', 'Consolas', monospace;
+        }
+
+        .btn-add {
+            background: rgba(16,185,129,0.1);
+            border-color: rgba(16,185,129,0.3);
+            color: var(--emerald);
+            padding: 0.6rem 0.75rem;
+            border-radius: 10px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .btn-add:hover { background: rgba(16,185,129,0.2); }
+
+        /* === TRADE LOG === */
+        .trade-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .trade-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface2);
+            padding: 0.65rem 0.85rem;
+            border-radius: 10px;
+            border-left: 3px solid var(--border2);
+            margin-bottom: 0.4rem;
+            transition: border-color 0.15s;
+        }
+        .trade-entry.win { border-left-color: var(--emerald); }
+        .trade-entry.loss { border-left-color: var(--red); }
+        .trade-entry.be { border-left-color: var(--muted); }
+
+        .trade-pair { font-size: 0.75rem; font-weight: 700; }
+        .trade-result { font-family: 'SF Mono', 'Consolas', monospace; font-size: 0.65rem; font-weight: 500; }
+        .trade-result.win { color: var(--emerald); }
+        .trade-result.loss { color: var(--red); }
+        .trade-result.be { color: var(--muted); }
+
+        .trade-delete {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+        .trade-delete:hover { color: var(--red); background: rgba(239,68,68,0.1); }
+
+        .trade-scroll { max-height: 180px; overflow-y: auto; padding-right: 4px; }
+        .trade-scroll::-webkit-scrollbar { width: 4px; }
+        .trade-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+        /* === DISCIPLINE ARCHIVE === */
+        .archive-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface2);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-bottom: 0.5rem;
+            transition: border-color 0.15s;
+        }
+        .archive-item:hover { border-color: rgba(239,68,68,0.3); }
+        .archive-item.completed { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05); }
+        .archive-label { font-size: 0.78rem; font-weight: 700; }
+        .archive-target { font-family: 'SF Mono', 'Consolas', monospace; font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+
+        .btn-done {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: var(--red);
+            padding: 0.35rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .btn-done:hover { background: var(--red); color: white; }
+        .btn-done.done-state { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: var(--emerald); cursor: default; }
+
+        /* === STATS === */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .big-stat-label { font-family: 'SF Mono', 'Consolas', monospace; font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.25rem; }
+        .big-stat-val { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 2.5rem; line-height: 1; color: white; }
+        .big-stat-val.green { color: var(--emerald); }
+
+        /* === MANTRA === */
+        .mantra-card {
+            background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(249,115,22,0.03));
+            border: 1px solid rgba(59,130,246,0.12);
+            text-align: center;
+            padding: 1.25rem;
+        }
+
+        .mantra-label { font-family: 'SF Mono', 'Consolas', monospace; font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 0.6rem; }
+        .mantra-text { font-size: 0.8rem; font-weight: 600; color: var(--text); line-height: 1.5; font-style: italic; }
+
+        /* === HEADER BUTTONS === */
+        .header-btn {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.6rem;
+            font-weight: 500;
+            background: var(--surface2);
+            color: var(--muted);
+            border: 1px solid var(--border2);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-left: 0.4rem;
+        }
+        .header-btn:hover { color: white; border-color: var(--blue); }
+
+        /* === MODAL (replaces confirm) === */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(6,8,16,0.85);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 340px;
+            width: 100%;
+            transform: translateY(10px);
+            transition: transform 0.2s;
+        }
+        .modal-overlay.open .modal { transform: translateY(0); }
+        .modal-title { font-size: 1rem; font-weight: 800; margin-bottom: 0.4rem; }
+        .modal-body { font-size: 0.8rem; color: #94a3b8; margin-bottom: 1.25rem; line-height: 1.5; }
+        .modal-actions { display: flex; gap: 0.5rem; }
+        .modal-cancel { flex: 1; background: var(--surface2); color: var(--muted); border: 1px solid var(--border2); padding: 0.65rem; border-radius: 10px; font-weight: 700; font-size: 0.75rem; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; transition: all 0.15s; }
+        .modal-cancel:hover { color: white; }
+        .modal-confirm { flex: 1; background: var(--blue); color: white; border: none; padding: 0.65rem; border-radius: 10px; font-weight: 700; font-size: 0.75rem; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; transition: all 0.15s; }
+        .modal-confirm:hover { background: #2563eb; }
+        .modal-confirm.danger { background: var(--red); }
+        .modal-confirm.danger:hover { background: #dc2626; }
+
+        /* === IMPORT PANEL === */
+        .import-area {
+            border: 2px dashed var(--border2);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.15s;
+            margin-top: 0.5rem;
+        }
+        .import-area:hover { border-color: var(--blue); }
+        .import-label { font-size: 0.75rem; color: var(--muted); font-family: 'SF Mono', 'Consolas', monospace; }
+
+        /* === TOAST === */
+        .toast {
+            position: fixed;
+            bottom: 5.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            padding: 0.6rem 1.2rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 200;
+            opacity: 0;
+            transition: all 0.2s;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* === BOTTOM NAV === */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(6,8,16,0.9);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
+            padding: 0.6rem 1rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 50;
+        }
+
+        .nav-btn {
+            flex: 1;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 0.6rem;
+            border-radius: 10px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.6rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .nav-btn:hover { color: white; border-color: var(--border2); }
+        .nav-btn.danger:hover { border-color: rgba(239,68,68,0.5); color: var(--red); }
+        .nav-btn.primary:hover { border-color: rgba(59,130,246,0.5); color: var(--blue); }
+
+        /* === SECTION COL === */
+        .section-col { display: flex; flex-direction: column; gap: 1rem; }
+
+        select option { background: #1e2733; }
+
+        /* Subtle entry animation */
+        .card { animation: fadeUp 0.3s ease both; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .section-col > .card:nth-child(1) { animation-delay: 0.05s; }
+        .section-col > .card:nth-child(2) { animation-delay: 0.1s; }
+        .section-col > .card:nth-child(3) { animation-delay: 0.15s; }
+
+        .divider { height: 1px; background: var(--border); margin: 0.75rem 0; }
+
+        .inline-flex { display: flex; align-items: center; gap: 0.5rem; }
+        .flex-between { display: flex; align-items: center; justify-content: space-between; }
+    </style>
+</head>
+<body>
+
+    <!-- Modal (replaces browser confirm dialogs) -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-title" id="modalTitle">Confirm</div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-actions">
+                <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+                <button class="modal-confirm" id="modalConfirm" onclick="confirmModal()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
+    <header>
+        <div>
+            <h1 class="header-title">COMMAND CENTER</h1>
+            <div class="inline-flex" style="margin-top: 4px;">
+                <p id="dateHeader" class="header-sub"></p>
+            </div>
+        </div>
+        <div class="header-right">
+            <p class="aspiration-label">Aspiration Goal</p>
+            <p class="aspiration">BMW M // MUSTANG 🏎️</p>
+        </div>
+    </header>
+
+    <div class="main-grid">
+
+        <!-- COL 1: DISCIPLINE — Checklist + Streaks + Archive + Stats -->
+        <div class="section-col">
+            <div class="card card-accent-blue">
+                <div class="section-label blue">⚡ Daily Discipline Core</div>
+                <div id="dailyChecklist"></div>
+            </div>
+
+            <div class="card card-accent-orange">
+                <div class="section-label orange">🔥 Multi-Day Streaks</div>
+                <div class="streak-grid" id="streakTrackers"></div>
+            </div>
+
+            <div class="card card-accent-red">
+                <div class="section-label red">🟥 Discipline Archive</div>
+                <div id="disciplineLibrary"></div>
+            </div>
+
+            <div class="card" style="padding: 1.25rem;">
+                <div class="stat-grid">
+                    <div>
+                        <div class="big-stat-label">ICT Win Rate</div>
+                        <div class="big-stat-val" id="winRate">0%</div>
+                    </div>
+                    <div>
+                        <div class="big-stat-label">Discipline Days</div>
+                        <div class="big-stat-val green" id="totalDisciplineDays">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COL 2: NUTRITION + SURPLUS — Macros feed directly into calculator -->
+        <div class="section-col">
+            <div class="card card-accent-emerald">
+                <div class="flex-between" style="margin-bottom: 1rem;">
+                    <div class="section-label emerald" style="margin:0;">🍲 Nutrition Log</div>
+                    <button onclick="confirmAction('Reset today\'s nutrition?', 'All macro and water counts will clear.', resetNutrition, false)" class="btn-sm" style="color: var(--muted); border-color: transparent; font-family: 'SF Mono', 'Consolas', monospace; font-size: 0.6rem; background: none;">RESET</button>
+                </div>
+
+                <div class="fuel-grid">
+                    <button onclick="addFuel(25, 5, 0)" class="fuel-btn">USN 🥤<br><span style="color:var(--muted);font-size:0.6rem;">25p · 5c</span></button>
+                    <button onclick="addFuel(12, 2, 0)" class="fuel-btn">2 EGGS 🥚<br><span style="color:var(--muted);font-size:0.6rem;">12p · 2c</span></button>
+                    <button onclick="addFuel(5, 45, 300)" class="fuel-btn carb">THOBWA 🍶<br><span style="opacity:0.7;font-size:0.6rem;">5p · 45c · 300ml</span></button>
+                    <button onclick="addFuel(0, 0, 500)" class="fuel-btn water">WATER 💧<br><span style="opacity:0.7;font-size:0.6rem;">+500ml</span></button>
+                </div>
+
+                <div class="custom-row">
+                    <input type="number" step="any" id="customP" placeholder="Protein (g)">
+                    <input type="number" step="any" id="customC" placeholder="Carbs (g)">
+                    <button onclick="addCustomFuel()" id="mealBtn" class="btn-add">+ ADD</button>
+                </div>
+
+                <div class="macro-stats">
+                    <div class="macro-cell">
+                        <div class="macro-label">Protein</div>
+                        <div class="macro-val" id="pDisp">0</div>
+                        <div class="macro-unit">/ 160g</div>
+                    </div>
+                    <div class="macro-cell">
+                        <div class="macro-label">Carbs</div>
+                        <div class="macro-val" style="color: var(--orange);" id="cDisp">0</div>
+                        <div class="macro-unit">g</div>
+                    </div>
+                    <div class="macro-cell">
+                        <div class="macro-label">Water</div>
+                        <div class="macro-val" id="wDisp">0.0</div>
+                        <div class="macro-unit">/ 3.0L</div>
+                    </div>
+                </div>
+                <div style="text-align:center; margin-top:0.5rem; padding:0.5rem; background:var(--surface2); border-radius:8px; border:1px solid var(--border);">
+                    <span style="font-size:0.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em;">Total Intake Today: </span>
+                    <span id="kcalInlineDisp" style="font-size:0.75rem; font-weight:800; color:var(--yellow);">0 kcal</span>
+                </div>
+            </div>
+
+            <!-- 10KG Surplus Calculator — directly below nutrition -->
+            <div class="card card-accent-yellow">
+                <div class="section-label yellow">🔥 10KG SURPLUS CALCULATOR</div>
+
+                <div style="display:grid; grid-template-columns:1fr auto; gap:0.5rem; margin-bottom:0.75rem; align-items:end;">
+                    <div>
+                        <div class="macro-label" style="margin-bottom:4px;">Daily Metabolic Burn — TDEE (kcal)</div>
+                        <input type="number" id="tdeeInput" placeholder="e.g. 2200" step="50">
+                    </div>
+                    <button onclick="saveTDEE()" class="btn-add">SET</button>
+                </div>
+
+                <div style="background:var(--surface2); border-radius:10px; padding:0.75rem; margin-bottom:0.75rem; border:1px solid var(--border2);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <span style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em;">Today's Calorie Balance</span>
+                        <span id="surplusLabel" style="font-size:0.7rem; font-weight:700;"></span>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.4rem; text-align:center;">
+                        <div>
+                            <div class="macro-label">Intake</div>
+                            <div style="font-size:1rem; font-weight:800;" id="kcalIn">0</div>
+                            <div class="macro-unit">kcal</div>
+                        </div>
+                        <div>
+                            <div class="macro-label">Burn (TDEE)</div>
+                            <div style="font-size:1rem; font-weight:800; color:var(--red);" id="kcalBurn">—</div>
+                            <div class="macro-unit">kcal</div>
+                        </div>
+                        <div>
+                            <div class="macro-label">Net</div>
+                            <div style="font-size:1rem; font-weight:800;" id="kcalNet">0</div>
+                            <div class="macro-unit">kcal</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span style="font-size:0.65rem; color:var(--muted);">All-Time Surplus → 10kg Goal</span>
+                        <span id="surplusPctLabel" style="font-size:0.65rem; font-weight:700; color:var(--yellow);"></span>
+                    </div>
+                    <div class="progress-bar" style="height:6px; margin-bottom:0.5rem;">
+                        <div class="progress-fill" id="surplusProgressFill" style="background:var(--yellow); width:0%; height:100%;"></div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; text-align:center;">
+                        <div class="macro-cell">
+                            <div class="macro-label">Total Surplus</div>
+                            <div style="font-size:1rem; font-weight:800; color:var(--yellow);" id="totalSurplusKcal">0</div>
+                            <div class="macro-unit">kcal banked</div>
+                        </div>
+                        <div class="macro-cell">
+                            <div class="macro-label">Est. Gained</div>
+                            <div style="font-size:1rem; font-weight:800; color:var(--emerald);" id="estKgGained">0.00</div>
+                            <div class="macro-unit">kg / 10kg</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mantra-card">
+                <div class="mantra-label">Mantra</div>
+                <div class="mantra-text">"You don't lack potential. You lack control. That's the truth. Structure builds control."</div>
+            </div>
+        </div>
+
+        <!-- COL 3: TRADING + BACKUP -->
+        <div class="section-col">
+            <div class="card card-accent-indigo">
+                <div class="section-label indigo">📈 ICT Journey</div>
+
+                <div class="trade-form">
+                    <input type="text" id="pair" placeholder="Pair (e.g. NAS100)">
+                    <input type="number" step="any" id="rr" placeholder="RR Ratio">
+                </div>
+                <select id="tradeResult" style="margin-bottom: 0.6rem;">
+                    <option value="WIN">✅ PROFIT (WIN)</option>
+                    <option value="LOSS">❌ DRAWDOWN (LOSS)</option>
+                    <option value="BE">⚖️ BREAKEVEN</option>
+                </select>
+                <button onclick="logTrade()" class="btn-primary" style="margin-bottom: 0.75rem;">Confirm Journal Entry</button>
+
+                <div class="trade-scroll" id="tradeLog"></div>
+            </div>
+
+            <!-- Import/Export -->
+            <div class="card" style="padding: 1rem;">
+                <div class="section-label" style="color: var(--muted);">💾 DATA BACKUP</div>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <button onclick="exportData()" class="nav-btn primary" style="flex: 1; border-radius: 10px; padding: 0.6rem;">⬆ EXPORT</button>
+                    <button onclick="document.getElementById('importFile').click()" class="nav-btn" style="flex: 1; border-radius: 10px; padding: 0.6rem;">⬇ IMPORT</button>
+                </div>
+                <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+                <p style="font-size: 0.6rem; color: var(--muted); font-family: 'SF Mono', 'Consolas', monospace; text-align: center; line-height: 1.4;">Export regularly to avoid data loss. Import restores a previous backup.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <button onclick="confirmAction('Reset today?', 'All task checkboxes and nutrition will be cleared for today.', resetDay, true)" class="nav-btn danger">🔄 RESET DAY</button>
+        <button onclick="exportData()" class="nav-btn primary">💾 BACKUP</button>
+    </div>
+
+    <script>
+        // =============================================
+        // CONFIGURATION
+        // =============================================
+        const CONFIG = {
+            proteinGoal: 160,
+            waterGoal: 3000,
+            dailyChecklistItems: [
+                { id: 'deep_work_1', label: '📚 Deep Work Block 1 (Grade 12)' },
+                { id: 'deep_work_2', label: '📖 Deep Work Block 2 (Grade 12)' },
+                { id: 'calisthenics', label: '💪 High-Intensity Calisthenics' },
+                { id: 'sit_silence', label: '🧘 Sit in Silence (1 Hour Daily)' },
+                { id: 'train_silence', label: '🤫 Train in Silence (Daily Effort)' },
+                { id: 'stare_eyes', label: '👀 Stare Into Own Eyes (10 min)' }
+            ],
+            streakItems: [
+                { id: 'wake_5am', label: '🌅 5:00AM Wake', target: 30 },
+                { id: 'no_sugar', label: '⛔ Zero Sugar', target: 21 },
+                { id: 'no_social', label: '📵 No Social Media', target: 7 },
+                { id: 'sleep_floor', label: '🧱 Sleep on Floor', target: 7 }
+            ],
+            archiveItems: [
+                { id: 'walk_km', label: '🚶 WALK 30-50 KM ALONE', target: 'Single Day' },
+                { id: 'read_book', label: '📖 READ 1 BOOK IN 1 DAY', target: 'Single Day' },
+                { id: 'fast_24', label: '💧 24 HOUR FAST', target: 'Single Day' },
+                { id: 'phone_24', label: '📵 24 HOURS NO PHONE', target: 'Single Day' },
+                { id: 'talking_24', label: '🤫 24 HOURS NO TALKING', target: 'Single Day' },
+                { id: 'go_out', label: '🧱 GO OUT ALONE (NO PHONE)', target: 'Single Day' },
+                { id: 'offline_48', label: '📴 STAY OFFLINE (48 HOURS)', target: '48 Hours' }
+            ]
+        };
+
+        // =============================================
+        // STATE
+        // =============================================
+        const DEFAULT_STORE = () => ({
+            daily: { p: 0, c: 0, w: 0, tasks: {}, streakLoggedToday: {}, date: todayStr() },
+            streaks: { wake_5am: 0, no_sugar: 0, no_social: 0, sleep_floor: 0 },
+            trades: [],
+            history: [],
+            completedDisciplinesCount: 0,
+            completedArchive: {},
+            tdee: null,               // user's daily calorie burn
+            totalSurplusKcal: 0       // all-time accumulated surplus kcal
+        });
+
+        function todayStr() { return new Date().toLocaleDateString('en-ZA'); }
+
+        function loadStore() {
+            try {
+                const raw = localStorage.getItem('execOpsData_v2');
+                if (!raw) {
+                    // MIGRATION: check for old key and carry over streak counts
+                    const oldRaw = localStorage.getItem('execOpsData');
+                    if (oldRaw) {
+                        const old = JSON.parse(oldRaw);
+                        const fresh = DEFAULT_STORE();
+                        if (old.streaks) fresh.streaks = old.streaks;
+                        if (old.trades) fresh.trades = old.trades;
+                        if (old.history) fresh.history = old.history;
+                        if (typeof old.completedDisciplinesCount === 'number') fresh.completedDisciplinesCount = old.completedDisciplinesCount;
+                        // Migrate daily if same date
+                        if (old.daily && old.daily.date === fresh.daily.date) {
+                            fresh.daily.p = old.daily.p || 0;
+                            fresh.daily.c = old.daily.c || 0;
+                            fresh.daily.w = old.daily.w || 0;
+                            fresh.daily.tasks = old.daily.tasks || {};
+                        }
+                        localStorage.setItem('execOpsData_v2', JSON.stringify(fresh));
+                        return fresh;
+                    }
+                    return DEFAULT_STORE();
+                }
+                const s = JSON.parse(raw);
+                // Patch missing keys
+                const d = DEFAULT_STORE();
+                if (!s.daily) s.daily = d.daily;
+                if (!s.daily.tasks) s.daily.tasks = {};
+                if (!s.daily.streakLoggedToday) s.daily.streakLoggedToday = {};
+                if (!s.streaks) s.streaks = d.streaks;
+                if (!s.trades) s.trades = [];
+                if (!s.history) s.history = [];
+                if (typeof s.completedDisciplinesCount !== 'number') s.completedDisciplinesCount = 0;
+                if (!s.completedArchive) s.completedArchive = {};
+                if (typeof s.tdee === 'undefined') s.tdee = null;
+                if (typeof s.totalSurplusKcal !== 'number') s.totalSurplusKcal = 0;
+                // patch old weight key out safely
+                if (s.weight) delete s.weight;
+                return s;
+            } catch(e) { return DEFAULT_STORE(); }
+        }
+
+        let store = loadStore();
+
+        // =============================================
+        // MODAL (replaces browser confirm)
+        // =============================================
+        let _modalCallback = null;
+
+        function confirmAction(title, body, callback, isDanger = false) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').textContent = body;
+            const btn = document.getElementById('modalConfirm');
+            btn.className = isDanger ? 'modal-confirm danger' : 'modal-confirm';
+            _modalCallback = callback;
+            document.getElementById('modalOverlay').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('open');
+            _modalCallback = null;
+        }
+
+        function confirmModal() {
+            if (_modalCallback) _modalCallback();
+            closeModal();
+        }
+
+        // Click outside to close
+        document.getElementById('modalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // =============================================
+        // TOAST
+        // =============================================
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        // =============================================
+        // MIDNIGHT ROLLOVER — checked on interval
+        // =============================================
+        function checkMidnightRollover() {
+            const today = todayStr();
+            if (store.daily.date !== today) {
+                // Bank yesterday's net surplus into all-time total before resetting
+                if (store.tdee) {
+                    const kcalIn = (store.daily.p * 4) + (store.daily.c * 4);
+                    const net = kcalIn - store.tdee;
+                    if (net > 0) {
+                        store.totalSurplusKcal = (store.totalSurplusKcal || 0) + net;
+                    }
+                }
+
+                store.history.push({ ...store.daily });
+
+                // Reset streaks where not completed yesterday
+                CONFIG.streakItems.forEach(item => {
+                    if (!store.daily.streakLoggedToday[item.id]) {
+                        store.streaks[item.id] = 0;
+                    }
+                });
+
+                store.daily = { p: 0, c: 0, w: 0, tasks: {}, streakLoggedToday: {}, date: today };
+                saveAndRender();
+                showToast('🌅 New day started!');
+            }
+        }
+
+        // Check every 60 seconds (handles open tabs past midnight)
+        setInterval(checkMidnightRollover, 60000);
+
+        // =============================================
+        // INIT
+        // =============================================
+        function init() {
+            checkMidnightRollover();
+            document.getElementById('dateHeader').textContent = store.daily.date.toUpperCase();
+            setupDailyChecklist();
+            setupDisciplineLibrary();
+            updateUI();
+        }
+
+        // =============================================
+        // DOM SETUP
+        // =============================================
+        function setupDailyChecklist() {
+            document.getElementById('dailyChecklist').innerHTML =
+                CONFIG.dailyChecklistItems.map(item => `
+                    <div class="task-row" id="row-${item.id}" onclick="toggleDailyTask('${item.id}')">
+                        <span class="task-label">${item.label}</span>
+                        <div class="checkbox" id="check-${item.id}"></div>
+                    </div>
+                `).join('');
+        }
+
+        function setupStreakTrackers() {
+            document.getElementById('streakTrackers').innerHTML =
+                CONFIG.streakItems.map(item => {
+                    const loggedToday = store.daily.streakLoggedToday[item.id] || false;
+                    const currentStreak = store.streaks[item.id] || 0;
+                    const pct = Math.min((currentStreak / item.target) * 100, 100);
+                    const isComplete = currentStreak >= item.target;
+                    return `
+                        <div onclick="toggleStreak('${item.id}')"
+                             class="streak-card ${loggedToday ? (isComplete ? 'complete' : 'active') : ''}">
+                            <div class="streak-name">${item.label}</div>
+                            <div class="streak-val">${currentStreak}</div>
+                            <div class="streak-target">/ ${item.target} days</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill ${isComplete ? 'complete' : ''}" style="width:${pct}%"></div>
+                            </div>
+                        </div>`;
+                }).join('');
+        }
+
+        function setupDisciplineLibrary() {
+            document.getElementById('disciplineLibrary').innerHTML =
+                CONFIG.archiveItems.map(item => {
+                    const done = store.completedArchive[item.id] || false;
+                    return `
+                        <div class="archive-item ${done ? 'completed' : ''}">
+                            <div>
+                                <div class="archive-label">${item.label}</div>
+                                <div class="archive-target">Goal: ${item.target}</div>
+                            </div>
+                            ${done
+                                ? `<div class="btn-done done-state">✓ DONE</div>`
+                                : `<button onclick="logSingleDiscipline('${item.id}')" class="btn-done">DONE</button>`
+                            }
+                        </div>`;
+                }).join('');
+        }
+
+        // =============================================
+        // INTERACTIONS
+        // =============================================
+        function toggleDailyTask(id) {
+            store.daily.tasks[id] = !store.daily.tasks[id];
+            saveAndRender();
+        }
+
+        function toggleStreak(id) {
+            // FIX: Only allow ONE increment per day per streak
+            const alreadyLoggedToday = store.daily.streakLoggedToday[id] || false;
+
+            if (!alreadyLoggedToday) {
+                // Mark as done for today and increment streak
+                store.daily.streakLoggedToday[id] = true;
+                store.daily.tasks[id] = true;
+                store.streaks[id] = (store.streaks[id] || 0) + 1;
+                showToast(`🔥 Streak updated!`);
+            } else {
+                // Allow undo if done today
+                store.daily.streakLoggedToday[id] = false;
+                store.daily.tasks[id] = false;
+                store.streaks[id] = Math.max(0, (store.streaks[id] || 0) - 1);
+            }
+            saveAndRender();
+        }
+
+        function addFuel(p, c, w) {
+            store.daily.p += p;
+            store.daily.c += c;
+            store.daily.w += w;
+            saveAndRender();
+        }
+
+        function addCustomFuel() {
+            const pVal = parseFloat(document.getElementById('customP').value);
+            const cVal = parseFloat(document.getElementById('customC').value);
+            if (isNaN(pVal) && isNaN(cVal)) { showToast('Enter protein or carbs first'); return; }
+            if (!isNaN(pVal)) store.daily.p += pVal;
+            if (!isNaN(cVal)) store.daily.c += cVal;
+            document.getElementById('customP').value = '';
+            document.getElementById('customC').value = '';
+            const btn = document.getElementById('mealBtn');
+            btn.textContent = '✓ SAVED';
+            setTimeout(() => btn.textContent = '+ ADD', 800);
+            saveAndRender();
+        }
+
+        function logTrade() {
+            const p = document.getElementById('pair').value.trim();
+            const r = parseFloat(document.getElementById('rr').value);
+            const res = document.getElementById('tradeResult').value;
+            if (!p || isNaN(r)) { showToast('Enter pair and RR ratio'); return; }
+            store.trades.unshift({ p, r, res, d: todayStr() });
+            document.getElementById('pair').value = '';
+            document.getElementById('rr').value = '';
+            saveAndRender();
+            showToast('Trade logged ✓');
+        }
+
+        function deleteTrade(index) {
+            confirmAction('Delete this trade?', 'This action cannot be undone.', () => {
+                store.trades.splice(index, 1);
+                saveAndRender();
+            }, true);
+        }
+
+        function logSingleDiscipline(id) {
+            confirmAction('Confirm completion?', 'This adds +1 to your global discipline count and marks this challenge done.', () => {
+                store.completedArchive[id] = true;
+                store.completedDisciplinesCount += 1;
+                saveAndRender();
+                showToast('💪 Discipline logged!');
+            });
+        }
+
+        // =============================================
+        // TDEE + SURPLUS TRACKER
+        // =============================================
+        // 1kg of body mass ≈ 7700 kcal surplus
+        const KCAL_PER_KG = 7700;
+        const GOAL_KG = 10;
+        const GOAL_KCAL = KCAL_PER_KG * GOAL_KG; // 77,000 kcal
+
+        function saveTDEE() {
+            const val = parseFloat(document.getElementById('tdeeInput').value);
+            if (isNaN(val) || val < 1000 || val > 6000) { showToast('Enter a valid TDEE (1000–6000)'); return; }
+            store.tdee = val;
+            saveAndRender();
+            showToast('TDEE set ✓');
+        }
+
+        function renderSurplusTracker() {
+            const p = store.daily.p || 0;
+            const c = store.daily.c || 0;
+            const kcalIn = Math.round((p * 4) + (c * 4));
+            const tdee = store.tdee;
+            const net = tdee ? kcalIn - tdee : null;
+
+            // Populate TDEE input if already set
+            if (tdee) {
+                const tdeeEl = document.getElementById('tdeeInput');
+                if (tdeeEl && !tdeeEl.value) tdeeEl.value = tdee;
+            }
+
+            // Today's balance
+            document.getElementById('kcalIn').textContent = kcalIn;
+            document.getElementById('kcalBurn').textContent = tdee ? tdee : '—';
+
+            const netEl = document.getElementById('kcalNet');
+            const surplusLabel = document.getElementById('surplusLabel');
+
+            if (net !== null) {
+                netEl.textContent = (net >= 0 ? '+' : '') + net;
+                netEl.style.color = net >= 0 ? 'var(--emerald)' : 'var(--red)';
+                surplusLabel.textContent = net >= 0 ? '✅ SURPLUS' : '⚠️ DEFICIT';
+                surplusLabel.style.color = net >= 0 ? 'var(--emerald)' : 'var(--red)';
+            } else {
+                netEl.textContent = '—';
+                netEl.style.color = 'var(--muted)';
+                surplusLabel.textContent = 'Set TDEE above';
+                surplusLabel.style.color = 'var(--muted)';
+            }
+
+            // All-time surplus (banked past days + today's live surplus if positive)
+            const todayContrib = (net !== null && net > 0) ? net : 0;
+            const allTimeSurplus = (store.totalSurplusKcal || 0) + todayContrib;
+            const estKg = allTimeSurplus / KCAL_PER_KG;
+            const pct = Math.min((allTimeSurplus / GOAL_KCAL) * 100, 100);
+
+            document.getElementById('totalSurplusKcal').textContent = Math.round(allTimeSurplus).toLocaleString();
+            document.getElementById('estKgGained').textContent = estKg.toFixed(2);
+            document.getElementById('surplusProgressFill').style.width = pct + '%';
+            document.getElementById('surplusPctLabel').textContent =
+                `${estKg.toFixed(2)}kg / 10kg (${pct.toFixed(1)}%)`;
+
+            // Turn progress bar green when goal hit
+            document.getElementById('surplusProgressFill').style.background =
+                pct >= 100 ? 'var(--emerald)' : 'var(--yellow)';
+        }
+
+        function resetNutrition() {
+            store.daily.p = 0; store.daily.c = 0; store.daily.w = 0;
+            saveAndRender();
+            showToast('Nutrition reset');
+        }
+
+        function resetDay() {
+            store.daily = {
+                p: 0, c: 0, w: 0,
+                tasks: {},
+                streakLoggedToday: { ...store.daily.streakLoggedToday }, // keep streak guards
+                date: todayStr()
+            };
+            saveAndRender();
+            showToast('Day reset');
+        }
+
+        // =============================================
+        // EXPORT / IMPORT
+        // =============================================
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(store, null, 2));
+            const a = document.createElement('a');
+            a.setAttribute("href", dataStr);
+            a.setAttribute("download", `command_center_backup_${todayStr().replace(/\//g,'-')}.json`);
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            showToast('Backup saved 💾');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    // Basic validation
+                    if (!imported.daily || !imported.trades) {
+                        showToast('❌ Invalid backup file');
+                        return;
+                    }
+                    confirmAction('Import this backup?', 'This will replace all current data with the imported backup.', () => {
+                        store = imported;
+                        // Patch any missing keys in imported data
+                        if (!store.daily.streakLoggedToday) store.daily.streakLoggedToday = {};
+                        if (!store.completedArchive) store.completedArchive = {};
+                        saveAndRender();
+                        setupDisciplineLibrary();
+                        showToast('✅ Backup restored!');
+                    }, false);
+                } catch(err) {
+                    showToast('❌ Failed to parse backup');
+                }
+                // Reset file input so same file can be imported again
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // =============================================
+        // RENDER
+        // =============================================
+        function saveAndRender() {
+            localStorage.setItem('execOpsData_v2', JSON.stringify(store));
+            renderUI();
+        }
+
+        function renderUI() {
+            // Checklist
+            CONFIG.dailyChecklistItems.forEach(item => {
+                const row = document.getElementById(`row-${item.id}`);
+                const box = document.getElementById(`check-${item.id}`);
+                const done = store.daily.tasks[item.id] || false;
+                if (!row || !box) return;
+                row.className = done ? 'task-row done' : 'task-row';
+                box.className = done ? 'checkbox checked' : 'checkbox';
+                box.textContent = done ? '✓' : '';
+            });
+
+            // Streaks
+            setupStreakTrackers();
+
+            // Nutrition
+            const p = store.daily.p || 0;
+            const c = store.daily.c || 0;
+            const w = store.daily.w || 0;
+
+            const pEl = document.getElementById('pDisp');
+            pEl.textContent = parseFloat(p.toFixed(1));
+            pEl.className = 'macro-val' + (p < CONFIG.proteinGoal ? ' warn' : ' ok');
+
+            const wEl = document.getElementById('wDisp');
+            wEl.textContent = (w / 1000).toFixed(1);
+            wEl.className = 'macro-val' + (w < CONFIG.waterGoal ? ' warn' : ' blue');
+
+            document.getElementById('cDisp').textContent = parseFloat(c.toFixed(1));
+
+            const kcalToday = Math.round((p * 4) + (c * 4));
+            document.getElementById('kcalInlineDisp').textContent = kcalToday.toLocaleString() + ' kcal';
+
+            // Trade log
+            document.getElementById('tradeLog').innerHTML = store.trades.length === 0
+                ? `<p style="text-align:center; color: var(--muted); font-size: 0.7rem; font-family: 'SF Mono', 'Consolas', monospace; padding: 1rem;">No trades logged yet</p>`
+                : store.trades.map((t, i) => {
+                    const cls = t.res === 'WIN' ? 'win' : (t.res === 'BE' ? 'be' : 'loss');
+                    return `<div class="trade-entry ${cls}">
+                        <div>
+                            <span class="trade-pair">${t.p}</span>
+                            <span style="color:var(--muted);font-size:0.65rem;font-family:'DM Mono',monospace;"> ${t.r.toFixed(1)}R · ${t.d}</span>
+                            <br>
+                            <span class="trade-result ${cls}">${t.res}</span>
+                        </div>
+                        <button class="trade-delete" onclick="deleteTrade(${i})">✕</button>
+                    </div>`;
+                }).join('');
+
+            // Stats
+            const wins = store.trades.filter(t => t.res === 'WIN').length;
+            document.getElementById('winRate').textContent = store.trades.length > 0
+                ? Math.round((wins / store.trades.length) * 100) + '%' : '0%';
+            document.getElementById('totalDisciplineDays').textContent = store.completedDisciplinesCount;
+
+            // Weight tracker
+            renderSurplusTracker();
+        }
+
+        init();
+    </script>
+</body>
+</html>
