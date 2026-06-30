@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>COMMAND CENTER</title>
+
+    <style>
+        :root {
+            --bg: #060810;
+            --surface: #0d1117;
+            --surface2: #161b24;
+            --border: #1e2733;
+            --border2: #252d3a;
+            --text: #e8edf5;
+            --muted: #4a5568;
+            --blue: #3b82f6;
+            --orange: #f97316;
+            --emerald: #10b981;
+            --red: #ef4444;
+            --yellow: #eab308;
+            --indigo: #818cf8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            padding: 1.25rem 1rem 7rem;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 0; opacity: 0.4;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%);
+            top: -200px; right: -200px;
+            pointer-events: none; z-index: 0;
+            border-radius: 50%;
+        }
+
+        /* === APP VIEW VIEWS === */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* === HEADER === */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1.5rem;
+            position: relative; z-index: 1;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-title {
+            font-size: 2.2rem;
+            letter-spacing: 0.05em;
+            line-height: 1;
+            background: linear-gradient(135deg, #fff 40%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-sub {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.6rem;
+            color: var(--blue);
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .header-right { text-align: right; }
+        .aspiration { font-size: 0.65rem; color: var(--orange); font-weight: 700; letter-spacing: 0.05em; }
+        .aspiration-label { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; font-family: 'SF Mono', 'Consolas', monospace; }
+
+        /* === GRID === */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            position: relative; z-index: 1;
+        }
+        @media (min-width: 992px) {
+            .main-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        /* === CARDS === */
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s;
+            margin-bottom: 1rem;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        }
+
+        .card-accent-blue { border-left: 3px solid var(--blue); }
+        .card-accent-orange { border-left: 3px solid var(--orange); }
+        .card-accent-emerald { border-left: 3px solid var(--emerald); }
+        .card-accent-red { border-left: 3px solid var(--red); }
+        .card-accent-yellow { border-left: 3px solid var(--yellow); }
+        .card-accent-indigo { border-left: 3px solid var(--indigo); }
+
+        .section-label {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 0.6rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-label.blue { color: var(--blue); }
+        .section-label.orange { color: var(--orange); }
+        .section-label.emerald { color: var(--emerald); }
+        .section-label.red { color: var(--red); }
+        .section-label.indigo { color: var(--indigo); }
+        .section-label.yellow { color: var(--yellow); }
+
+        /* === CHECKLIST === */
+        .task-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--surface2); padding: 0.75rem 1rem; border-radius: 10px;
+            cursor: pointer; border: 1px solid transparent; transition: all 0.15s; margin-bottom: 0.5rem;
+        }
+        .task-row:hover { background: #1a2130; border-color: var(--border2); }
+        .task-row.done { background: rgba(59,130,246,0.07); border-color: rgba(59,130,246,0.2); }
+        .task-row.done .task-label { color: var(--muted); text-decoration: line-through; }
+        .task-label { font-size: 0.8rem; font-weight: 600; }
+
+        .checkbox {
+            width: 26px; height: 26px; border-radius: 7px; border: 2px solid var(--border2);
+            display: flex; align-items: center; justify-content: center; font-size: 0.75rem; transition: all 0.15s;
+        }
+        .checkbox.checked { background: var(--blue); border-color: var(--blue); box-shadow: 0 0 12px rgba(59,130,246,0.4); }
+
+        /* === STREAK CARDS === */
+        .streak-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+        .streak-card {
+            background: var(--surface2); border-radius: 12px; padding: 0.85rem; border: 1px solid var(--border);
+            cursor: pointer; text-align: center; transition: all 0.15s;
+        }
+        .streak-card.active { border-color: var(--orange); background: rgba(249,115,22,0.08); }
+        .streak-card.complete { border-color: var(--emerald); background: rgba(16,185,129,0.08); }
+        .streak-name { font-size: 0.6rem; font-family: 'SF Mono', 'Consolas', monospace; color: var(--muted); text-transform: uppercase; margin-bottom: 0.35rem; }
+        .streak-val { font-size: 1.8rem; font-weight: bold; color: white; line-height: 1; }
+        .streak-target { font-size: 0.6rem; color: var(--muted); }
+
+        .progress-bar { width: 100%; height: 3px; background: var(--border2); border-radius: 99px; margin-top: 0.5rem; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--orange); transition: width 0.4s ease; }
+        .progress-fill.complete { background: var(--emerald); }
+
+        /* === NUTRITION === */
+        .fuel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 0.75rem; }
+        .fuel-btn {
+            background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+            padding: 0.65rem; border-radius: 10px; font-size: 0.7rem; font-weight: 700;
+            font-family: 'SF Mono', 'Consolas', monospace; cursor: pointer; transition: all 0.15s;
+        }
+        .fuel-btn.water { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.25); color: #93c5fd; }
+        .fuel-btn.carb { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.25); color: #fed7aa; }
+        .custom-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.5rem; margin-bottom: 0.75rem; }
+
+        input[type="number"], input[type="text"], select {
+            background: var(--surface2); color: var(--text); border: 1px solid var(--border2);
+            border-radius: 10px; padding: 0.6rem 0.75rem; font-size: 0.75rem; outline: none; width: 100%;
+        }
+        input:focus, select:focus { border-color: var(--blue); }
+
+        .macro-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+        .macro-cell { background: rgba(13,17,23,0.8); border-radius: 12px; padding: 0.75rem 0.5rem; text-align: center; border: 1px solid var(--border); }
+        .macro-label { font-family: 'SF Mono', 'Consolas', monospace; font-size: 0.55rem; color: var(--muted); text-transform: uppercase; margin-bottom: 0.25rem; }
+        .macro-val { font-size: 1.6rem; font-weight: bold; color: white; line-height: 1; }
+        .macro-val.warn { color: var(--red); }
+        .macro-val.ok { color: var(--emerald); }
+        .macro-val.blue { color: #60a5fa; }
+        .macro-unit { font-size: 0.65rem; color: var(--muted); }
+
+        /* === CIRCUIT WORKOUT PLAYER ENGINE === */
+        .workout-layout { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        @media(min-width: 768px) { .workout-layout { grid-template-columns: 1fr 1.2fr; } }
+        
+        .anim-viewport {
+            background: rgba(0,0,0,0.4); border: 1px solid var(--border2); border-radius: 16px;
+            height: 220px; display: flex; justify-content: center; align-items: center; position: relative; margin-bottom: 1rem;
+        }
+        
+        /* Interactive SVG Elements */
+        #stick-arm { transform-origin: 50px 32px; transition: transform 0.1s linear; }
+        #stick-forearm { transform-origin: 64px 44px; transition: transform 0.1s linear; }
+        #stick-body-group { transform-origin: 50px 75px; transition: transform 0.2s ease-in-out; }
+
+        .player-display { background: var(--surface2); border-radius: 14px; padding: 1.25rem; border: 1px solid var(--border); text-align: center; }
+        .circuit-badge {
+            font-family: 'SF Mono', 'Consolas', monospace; font-size: 0.65rem; background: rgba(129,140,248,0.15);
+            color: var(--indigo); padding: 0.25rem 0.6rem; border-radius: 6px; display: inline-block; margin-bottom: 0.5rem; font-weight: 700;
+        }
+        .ex-title { font-size: 1.6rem; font-weight: 800; color: white; margin-bottom: 0.25rem; }
+        .ex-advice { font-size: 0.8rem; color: var(--muted); font-style: italic; margin-bottom: 1rem; }
+        
+        .counter-box {
+            display: flex; align-items: center; justify-content: center; gap: 1.5rem;
+            background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--border);
+        }
+        .counter-btn {
+            background: var(--surface2); border: 1px solid var(--border2); color: white; width: 36px; height: 36px;
+            border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .counter-btn:active { transform: scale(0.92); }
+        .counter-val { font-size: 1.8rem; font-weight: 800; color: var(--yellow); min-width: 60px; font-variant-numeric: tabular-nums; }
+        
+        .timer-strip { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.15); border-radius: 10px; padding: 0.6rem; margin-bottom: 1.25rem; font-size: 1.1rem; font-weight: 700; }
+        
+        .w-btn-group { display: flex; gap: 0.5rem; }
+        .w-btn { flex: 1; padding: 0.85rem; border: none; border-radius: 10px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; cursor: pointer; transition: all 0.15s; font-family: sans-serif; }
+        .w-btn-complete { background: var(--emerald); color: black; }
+        .w-btn-pause { background: #334155; color: white; }
+
+        /* === CALENDAR SYSTEM === */
+        .calendar-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .calendar-month-title { font-size: 1.1rem; font-weight: 800; color: white; font-family: 'SF Mono', monospace; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; }
+        .calendar-day-label { text-align: center; font-size: 0.55rem; font-family: 'SF Mono', monospace; color: var(--muted); text-transform: uppercase; padding-bottom: 0.25rem; }
+        .calendar-cell {
+            background: var(--surface2); border: 1px solid var(--border); aspect-ratio: 1; border-radius: 8px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; position: relative; cursor: pointer;
+        }
+        .calendar-cell:hover { border-color: var(--muted); }
+        .calendar-cell.current-day { border: 2px solid var(--blue); }
+        .calendar-cell.workout-done { background: rgba(16,185,129,0.15); border-color: var(--emerald); color: var(--emerald); }
+        .calendar-cell.rest-day { background: rgba(59,130,246,0.15); border-color: var(--blue); color: var(--blue); }
+        .calendar-cell .dot { width: 4px; height: 4px; border-radius: 50%; position: absolute; bottom: 3px; }
+        .calendar-cell.workout-done .dot { background: var(--emerald); }
+        .calendar-cell.rest-day .dot { background: var(--blue); }
+        .calendar-cell.empty { background: transparent; border: none; cursor: default; }
+
+        /* === TRADE LOG === */
+        .trade-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .trade-entry { display: flex; justify-content: space-between; align-items: center; background: var(--surface2); padding: 0.65rem 0.85rem; border-radius: 10px; border-left: 3px solid var(--border2); margin-bottom: 0.4rem; }
+        .trade-entry.win { border-left-color: var(--emerald); }
+        .trade-entry.loss { border-left-color: var(--red); }
+        .trade-entry.be { border-left-color: var(--muted); }
+        .trade-pair { font-size: 0.75rem; font-weight: 700; }
+        .trade-result { font-family: 'SF Mono', monospace; font-size: 0.65rem; }
+        .trade-result.win { color: var(--emerald); }
+        .trade-result.loss { color: var(--red); }
+        .trade-result.be { color: var(--muted); }
+        .trade-delete { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.8rem; padding: 0.2rem 0.4rem; border-radius: 6px; }
+        .trade-delete:hover { color: var(--red); background: rgba(239,68,68,0.1); }
+        .trade-scroll { max-height: 180px; overflow-y: auto; padding-right: 4px; }
+        .trade-scroll::-webkit-scrollbar { width: 4px; }
+        .trade-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+        /* === DISCIPLINE ARCHIVE === */
+        .archive-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface2); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 0.5rem; }
+        .archive-item.completed { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.05); }
+        .archive-label { font-size: 0.78rem; font-weight: 700; }
+        .archive-target { font-family: 'SF Mono', monospace; font-size: 0.55rem; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+        .btn-done { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: var(--red); padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.65rem; font-weight: 700; font-family: 'SF Mono', monospace; cursor: pointer; }
+        .btn-done:hover { background: var(--red); color: white; }
+        .btn-done.done-state { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: var(--emerald); cursor: default; }
+
+        /* === STANDARD BUTTONS === */
+        .btn-primary { background: var(--blue); color: white; padding: 0.7rem 1rem; border-radius: 10px; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; border: none; width: 100%; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-sm { font-size: 0.65rem; font-weight: 700; cursor: pointer; border-radius: 8px; padding: 0.35rem 0.75rem; border: 1px solid; background: none; }
+        .btn-add { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: var(--emerald); padding: 0.6rem 0.75rem; border-radius: 10px; font-family: 'SF Mono', monospace; font-size: 0.7rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .btn-add:hover { background: rgba(16,185,129,0.2); }
+
+        /* === METRICS STATS === */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: center; }
+        .big-stat-label { font-family: 'SF Mono', monospace; font-size: 0.55rem; color: var(--muted); text-transform: uppercase; margin-bottom: 0.25rem; }
+        .big-stat-val { font-size: 2.2rem; font-weight: bold; color: white; line-height: 1; }
+        .big-stat-val.green { color: var(--emerald); }
+
+        /* === MANTRA === */
+        .mantra-card { background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(249,115,22,0.03)); border: 1px solid rgba(59,130,246,0.12); text-align: center; padding: 1.25rem; }
+        .mantra-label { font-family: 'SF Mono', monospace; font-size: 0.55rem; color: var(--muted); text-transform: uppercase; margin-bottom: 0.6rem; }
+        .mantra-text { font-size: 0.8rem; font-weight: 600; color: var(--text); line-height: 1.5; font-style: italic; }
+
+        /* === MODAL DIALOG === */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(6,8,16,0.85); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 1.5rem; max-width: 340px; width: 100%; transform: translateY(10px); transition: transform 0.2s; }
+        .modal-overlay.open .modal { transform: translateY(0); }
+        .modal-title { font-size: 1rem; font-weight: 800; margin-bottom: 0.4rem; }
+        .modal-body { font-size: 0.8rem; color: #94a3b8; margin-bottom: 1.25rem; line-height: 1.5; }
+        .modal-actions { display: flex; gap: 0.5rem; }
+        .modal-cancel { flex: 1; background: var(--surface2); color: var(--muted); border: 1px solid var(--border2); padding: 0.65rem; border-radius: 10px; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
+        .modal-confirm { flex: 1; background: var(--blue); color: white; border: none; padding: 0.65rem; border-radius: 10px; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
+        .modal-confirm.danger { background: var(--red); }
+
+        /* === TOAST ALERTS === */
+        .toast { position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface); border: 1px solid var(--border2); color: var(--text); padding: 0.6rem 1.2rem; border-radius: 99px; font-size: 0.75rem; font-weight: 600; z-index: 200; opacity: 0; transition: all 0.2s; pointer-events: none; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* === BOTTOM NAVIGATION === */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(6,8,16,0.9); backdrop-filter: blur(12px); border-top: 1px solid var(--border); padding: 0.6rem 1rem; display: flex; gap: 0.4rem; z-index: 50; }
+        .nav-btn { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 0.65rem 0.4rem; border-radius: 10px; font-family: 'SF Mono', monospace; font-size: 0.58rem; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.15s; text-align: center; }
+        .nav-btn.active { color: white; border-color: var(--blue); background: rgba(59,130,246,0.08); }
+        .nav-btn.danger:hover { border-color: rgba(239,68,68,0.5); color: var(--red); }
+
+        .section-col { display: flex; flex-direction: column; gap: 1rem; }
+        select option { background: #1e2733; }
+        .divider { height: 1px; background: var(--border); margin: 0.75rem 0; }
+        .inline-flex { display: flex; align-items: center; gap: 0.5rem; }
+        .flex-between { display: flex; align-items: center; justify-content: space-between; }
+    </style>
+</head>
+<body>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-title" id="modalTitle">Confirm</div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-actions">
+                <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+                <button class="modal-confirm" id="modalConfirm" onclick="confirmModal()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <header>
+        <div>
+            <h1 class="header-title">COMMAND CENTER</h1>
+            <div class="inline-flex" style="margin-top: 4px;">
+                <p id="dateHeader" class="header-sub"></p>
+            </div>
+        </div>
+        <div class="header-right">
+            <p class="aspiration-label">Aspiration Goal</p>
+            <p class="aspiration">BMW M // MUSTANG 🏎️</p>
+        </div>
+    </header>
+
+    <div id="view-dashboard" class="tab-content active">
+        <div class="main-grid">
+            <div class="section-col">
+                <div class="card card-accent-blue">
+                    <div class="section-label blue">⚡ Daily Discipline Core</div>
+                    <div id="dailyChecklist"></div>
+                </div>
+
+                <div class="card card-accent-orange">
+                    <div class="section-label orange">🔥 Multi-Day Streaks</div>
+                    <div class="streak-grid" id="streakTrackers"></div>
+                </div>
+
+                <div class="card card-accent-red">
+                    <div class="section-label red">🟥 Discipline Archive</div>
+                    <div id="disciplineLibrary"></div>
+                </div>
+
+                <div class="card">
+                    <div class="stat-grid">
+                        <div>
+                            <div class="big-stat-label">ICT Win Rate</div>
+                            <div class="big-stat-val" id="winRate">0%</div>
+                        </div>
+                        <div>
+                            <div class="big-stat-label">Discipline Days</div>
+                            <div class="big-stat-val green" id="totalDisciplineDays">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-col">
+                <div class="card card-accent-emerald">
+                    <div class="flex-between" style="margin-bottom: 1rem;">
+                        <div class="section-label emerald" style="margin:0;">🍲 Nutrition Log</div>
+                        <button onclick="confirmAction('Reset today\'s nutrition?', 'All macro and water counts will clear.', resetNutrition, false)" class="btn-sm" style="color: var(--muted); border-color: transparent; font-size: 0.6rem; background: none;">RESET</button>
+                    </div>
+
+                    <div class="fuel-grid">
+                        <button onclick="addFuel(25, 5, 0)" class="fuel-btn">USN 🥤<br><span style="color:var(--muted);font-size:0.6rem;">25p · 5c</span></button>
+                        <button onclick="addFuel(12, 2, 0)" class="fuel-btn">2 EGGS 🥚<br><span style="color:var(--muted);font-size:0.6rem;">12p · 2c</span></button>
+                        <button onclick="addFuel(5, 45, 300)" class="fuel-btn carb">THOBWA 🍶<br><span style="opacity:0.7;font-size:0.6rem;">5p · 45c · 300ml</span></button>
+                        <button onclick="addFuel(0, 0, 500)" class="fuel-btn water">WATER 💧<br><span style="opacity:0.7;font-size:0.6rem;">+500ml</span></button>
+                    </div>
+
+                    <div class="custom-row">
+                        <input type="number" step="any" id="customP" placeholder="Protein (g)">
+                        <input type="number" step="any" id="customC" placeholder="Carbs (g)">
+                        <input type="number" step="any" id="customKcal" placeholder="Calories">
+                        <button onclick="addCustomFuel()" id="mealBtn" class="btn-add">+ ADD</button>
+                    </div>
+
+                    <div class="macro-stats">
+                        <div class="macro-cell">
+                            <div class="macro-label">Protein</div>
+                            <div class="macro-val" id="pDisp">0</div>
+                            <div class="macro-unit">/ 160g</div>
+                        </div>
+                        <div class="macro-cell">
+                            <div class="macro-label">Carbs</div>
+                            <div class="macro-val" style="color: var(--orange);" id="cDisp">0</div>
+                            <div class="macro-unit">g</div>
+                        </div>
+                        <div class="macro-cell">
+                            <div class="macro-label">Water</div>
+                            <div class="macro-val" id="wDisp">0.0</div>
+                            <div class="macro-unit">/ 3.0L</div>
+                        </div>
+                    </div>
+                    <div style="text-align:center; margin-top:0.5rem; padding:0.5rem; background:var(--surface2); border-radius:8px; border:1px solid var(--border);">
+                        <span style="font-size:0.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em;">Total Intake Today: </span>
+                        <span id="kcalInlineDisp" style="font-size:0.75rem; font-weight:800; color:var(--yellow);">0 kcal</span>
+                    </div>
+                </div>
+
+                <div class="card card-accent-yellow">
+                    <div class="section-label yellow">🔥 10KG SURPLUS CALCULATOR</div>
+
+                    <div style="display:grid; grid-template-columns:1fr auto; gap:0.5rem; margin-bottom:0.75rem; align-items:end;">
+                        <div>
+                            <div class="macro-label" style="margin-bottom:4px;">Daily Metabolic Burn — TDEE (kcal)</div>
+                            <input type="number" id="tdeeInput" placeholder="e.g. 2200" step="50">
+                        </div>
+                        <button onclick="saveTDEE()" class="btn-add">SET</button>
+                    </div>
+
+                    <div style="background:var(--surface2); border-radius:10px; padding:0.75rem; margin-bottom:0.75rem; border:1px solid var(--border2);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                            <span style="font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em;">Today's Calorie Balance</span>
+                            <span id="surplusLabel" style="font-size:0.7rem; font-weight:700;"></span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.4rem; text-align:center;">
+                            <div>
+                                <div class="macro-label">Intake</div>
+                                <div style="font-size:0.95rem; font-weight:800;" id="kcalIn">0</div>
+                                <div class="macro-unit">kcal</div>
+                            </div>
+                            <div>
+                                <div class="macro-label">Total Burn</div>
+                                <div style="font-size:0.95rem; font-weight:800; color:var(--red);" id="kcalBurn">—</div>
+                                <div class="macro-unit">kcal</div>
+                            </div>
+                            <div>
+                                <div class="macro-label">Net</div>
+                                <div style="font-size:0.95rem; font-weight:800;" id="kcalNet">0</div>
+                                <div class="macro-unit">kcal</div>
+                            </div>
+                        </div>
+                        <div id="workout-burn-subtext" style="font-size:0.6rem; color:var(--indigo); text-align:center; margin-top:6px; display:none;"></div>
+                    </div>
+
+                    <div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span style="font-size:0.65rem; color:var(--muted);">All-Time Surplus → 10kg Goal</span>
+                            <span id="surplusPctLabel" style="font-size:0.65rem; font-weight:700; color:var(--yellow);"></span>
+                        </div>
+                        <div class="progress-bar" style="height:6px; margin-bottom:0.5rem;">
+                            <div class="progress-fill" id="surplusProgressFill" style="background:var(--yellow); width:0%; height:100%;"></div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; text-align:center;">
+                            <div class="macro-cell">
+                                <div class="macro-label">Total Surplus</div>
+                                <div style="font-size:1rem; font-weight:800; color:var(--yellow);" id="totalSurplusKcal">0</div>
+                                <div class="macro-unit">kcal banked</div>
+                            </div>
+                            <div class="macro-cell">
+                                <div class="macro-label">Est. Gained</div>
+                                <div style="font-size:1rem; font-weight:800; color:var(--emerald);" id="estKgGained">0.00</div>
+                                <div class="macro-unit">kg / 10kg</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mantra-card">
+                    <div class="mantra-label">Mantra</div>
+                    <div class="mantra-text">"You don't lack potential. You lack control. That's the truth. Structure builds control."</div>
+                </div>
+            </div>
+
+            <div class="section-col">
+                <div class="card card-accent-indigo">
+                    <div class="section-label indigo">📈 ICT Journey</div>
+                    <div class="trade-form">
+                        <input type="text" id="pair" placeholder="Pair (e.g. NAS100)">
+                        <input type="number" step="any" id="rr" placeholder="RR Ratio">
+                    </div>
+                    <select id="tradeResult" style="margin-bottom: 0.6rem;">
+                        <option value="WIN">✅ PROFIT (WIN)</option>
+                        <option value="LOSS">❌ DRAWDOWN (LOSS)</option>
+                        <option value="BE">⚖️ BREAKEVEN</option>
+                    </select>
+                    <button onclick="logTrade()" class="btn-primary" style="margin-bottom: 0.75rem;">Confirm Journal Entry</button>
+                    <div class="trade-scroll" id="tradeLog"></div>
+                </div>
+
+                <div class="card" style="padding: 1rem;">
+                    <div class="section-label" style="color: var(--muted);">💾 DATA BACKUP</div>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <button onclick="exportData()" class="nav-btn primary" style="flex: 1; padding: 0.6rem;">⬆ EXPORT</button>
+                        <button onclick="document.getElementById('importFile').click()" class="nav-btn" style="flex: 1; padding: 0.6rem;">⬇ IMPORT</button>
+                    </div>
+                    <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+                    <p style="font-size: 0.6rem; color: var(--muted); text-align: center; line-height: 1.4;">Export regularly to avoid data loss. Import restores backups.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-workout" class="tab-content">
+        <div class="workout-layout">
+            <div class="section-col">
+                <div class="card card-accent-indigo" style="margin-bottom:0;">
+                    <div class="section-label indigo">🤖 Dynamic Vector Form Guide</div>
+                    <div class="anim-viewport">
+                        <svg id="stick-figure-svg" width="160" height="160" viewBox="0 0 100 100" style="overflow: visible;">
+                            <line x1="10" y1="75" x2="90" y2="75" stroke="var(--border2)" stroke-width="3" stroke-linecap="round"/>
+                            <g id="stick-body-group">
+                                <circle id="stick-head" cx="50" cy="22" r="6.5" fill="var(--text)"/>
+                                <line id="stick-spine" x1="50" y1="28.5" x2="50" y2="54" stroke="var(--text)" stroke-width="4.5" stroke-linecap="round"/>
+                                <line id="stick-leg-l" x1="50" y1="54" x2="38" y2="75" stroke="var(--text)" stroke-width="4.5" stroke-linecap="round"/>
+                                <line id="stick-leg-r" x1="50" y1="54" x2="62" y2="75" stroke="var(--text)" stroke-width="4.5" stroke-linecap="round"/>
+                                <g id="stick-arm-system">
+                                    <line id="stick-arm" x1="50" y1="32" x2="64" y2="44" stroke="var(--text)" stroke-width="4" stroke-linecap="round"/>
+                                    <line id="stick-forearm" x1="64" y1="44" x2="76" y2="30" stroke="var(--text)" stroke-width="4" stroke-linecap="round"/>
+                                    <circle id="stick-weight" cx="76" cy="30" r="4.5" fill="var(--blue)"/>
+                                </g>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-col">
+                <div class="card player-display">
+                    <div id="circuitRoundBadge" class="circuit-badge">ROUND 1 / 3</div>
+                    <div id="circuitExTitle" class="ex-title">Bicep Curls</div>
+                    <div id="circuitExAdvice" class="ex-advice">Squeeze arms up</div>
+                    
+                    <div class="macro-label" style="margin-bottom: 6px;">Adjustable Completed Reps</div>
+                    <div class="counter-box">
+                        <button class="counter-btn" onclick="adjustLiveReps(-1)">−</button>
+                        <div id="circuitLiveReps" class="counter-val">12</div>
+                        <button class="counter-btn" onclick="adjustLiveReps(1)">+</button>
+                    </div>
+
+                    <div id="circuitTimerStrip" class="timer-strip" style="display:none;">REST ACTIVE</div>
+                    
+                    <div style="font-size: 0.65rem; color: var(--muted); text-transform: uppercase; margin-bottom: 12px;" id="circuitNextUpLabel">
+                        Next Up: Hammer Curls
+                    </div>
+
+                    <div class="w-btn-group">
+                        <button id="circuitPauseBtn" class="w-btn w-btn-pause" onclick="toggleCircuitPause()">Pause</button>
+                        <button id="circuitActionBtn" class="w-btn w-btn-complete" onclick="handleCircuitAction()">Complete Set</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-calendar" class="tab-content">
+        <div class="card card-accent-blue">
+            <div class="calendar-header-row">
+                <div id="calendarMonthYear" class="calendar-month-title">MONTH YEAR</div>
+                <button onclick="markRestDay()" class="btn-sm" style="color:var(--blue); border-color:var(--border2); background:var(--surface2);">LOG REST DAY</button>
+            </div>
+            <div id="calendarGridContainer" class="calendar-grid"></div>
+            <p style="font-size:0.6rem; color:var(--muted); text-align:center; margin-top:1rem; line-height:1.4;">
+                <span style="color:var(--emerald);">●</span> Completed Workouts &nbsp;&nbsp; <span style="color:var(--blue);">●</span> Rest Days logged manually. Tap a date to modify.
+            </p>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-btn active">📊 CORE</button>
+        <button onclick="switchView('workout')" id="nav-workout" class="nav-btn">💪 ARMS PLAYER</button>
+        <button onclick="switchView('calendar')" id="nav-calendar" class="nav-btn">📅 CALENDAR</button>
+        <button onclick="confirmAction('Reset today?', 'All checklist markers, logged session burn, and macro data will clear.', resetDay, true)" class="nav-btn danger">🔄 RESET</button>
+    </div>
+
+    <script>
+        // =============================================
+        // MASTER SYSTEM SPECIFICATION ARCHITECTURE
+        // =============================================
+        const CONFIG = {
+            proteinGoal: 160,
+            waterGoal: 3000,
+            dailyChecklistItems: [
+                { id: 'deep_work_1', label: '📚 Deep Work Block 1 (Grade 12)' },
+                { id: 'deep_work_2', label: '📖 Deep Work Block 2 (Grade 12)' },
+                { id: 'calisthenics', label: '💪 High-Intensity Arms & Wrists' },
+                { id: 'sit_silence', label: '🧘 Sit in Silence (1 Hour Daily)' },
+                { id: 'train_silence', label: '🤫 Train in Silence (Daily Effort)' },
+                { id: 'stare_eyes', label: '👀 Stare Into Own Eyes (10 min)' }
+            ],
+            streakItems: [
+                { id: 'wake_5am', label: '🌅 5:00AM Wake', target: 30 },
+                { id: 'no_sugar', label: '⛔ Zero Sugar', target: 21 },
+                { id: 'no_social', label: '📵 No Social Media', target: 7 },
+                { id: 'sleep_floor', label: '🧱 Sleep on Floor', target: 7 }
+            ],
+            archiveItems: [
+                { id: 'walk_km', label: '🚶 WALK 30-50 KM ALONE', target: 'Single Day' },
+                { id: 'read_book', label: '📖 READ 1 BOOK IN 1 DAY', target: 'Single Day' },
+                { id: 'fast_24', label: '💧 24 HOUR FAST', target: 'Single Day' },
+                { id: 'phone_24', label: '📵 24 HOURS NO PHONE', target: 'Single Day' },
+                { id: 'talking_24', label: '🤫 24 HOURS NO TALKING', target: 'Single Day' },
+                { id: 'go_out', label: '🧱 GO OUT ALONE (NO PHONE)', target: 'Single Day' },
+                { id: 'offline_48', label: '📴 STAY OFFLINE (48 HOURS)', target: '48 Hours' }
+            ],
+            workoutCircuit: [
+                { id: 'bicep_curls', name: "Bicep Curls", defaultReps: 12, advice: "Squeeze arms up completely", type: "bicep", kcalPerSet: 15 },
+                { id: 'hammer_curls', name: "Hammer Curls", defaultReps: 12, advice: "Thumbs facing up, control the lower", type: "hammer", kcalPerSet: 15 },
+                { id: 'tricep_press', name: "Tricep Overhead Press", defaultReps: 15, advice: "Extend fully up over your head", type: "tricep", kcalPerSet: 15 },
+                { id: 'wrist_curls', name: "Wrist Curls", defaultReps: 20, advice: "Palms up, isolate the inner forearms", type: "wrist_curl", kcalPerSet: 10 },
+                { id: 'wrist_extensions', name: "Wrist Extensions", defaultReps: 20, advice: "Palms down, target the top forearm burn", type: "wrist_ext", kcalPerSet: 10 }
+            ]
+        };
+
+        // =============================================
+        // MASTER SYSTEM STORAGE CONFIGURATION STATE
+        // =============================================
+        const DEFAULT_STORE = () => ({
+            daily: { p: 0, c: 0, w: 0, k: 0, workoutBurn: 0, tasks: {}, streakLoggedToday: {}, date: todayStr() },
+            streaks: { wake_5am: 0, no_sugar: 0, no_social: 0, sleep_floor: 0 },
+            trades: [],
+            history: [],
+            completedDisciplinesCount: 0,
+            completedArchive: {},
+            tdee: null,
+            totalSurplusKcal: 0,
+            workoutDates: {}, 
+            circuitRound: 1,
+            circuitExIdx: 0
+        });
+
+        function todayStr() { return new Date().toLocaleDateString('en-ZA'); }
+        function isoTodayStr() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+
+        function loadStore() {
+            try {
+                const raw = localStorage.getItem('execOpsData_v3');
+                if (!raw) {
+                    const oldRaw = localStorage.getItem('execOpsData_v2');
+                    if (oldRaw) {
+                        const old = JSON.parse(oldRaw);
+                        const fresh = DEFAULT_STORE();
+                        Object.assign(fresh, old);
+                        return fresh;
+                    }
+                    return DEFAULT_STORE();
+                }
+                const s = JSON.parse(raw);
+                const d = DEFAULT_STORE();
+                if (!s.daily) s.daily = d.daily;
+                if (!s.daily.tasks) s.daily.tasks = {};
+                if (!s.daily.streakLoggedToday) s.daily.streakLoggedToday = {};
+                if (typeof s.daily.workoutBurn === 'undefined') s.daily.workoutBurn = 0;
+                if (!s.streaks) s.streaks = d.streaks;
+                if (!s.trades) s.trades = [];
+                if (!s.history) s.history = [];
+                if (!s.completedArchive) s.completedArchive = {};
+                if (!s.workoutDates) s.workoutDates = {};
+                if (typeof s.circuitRound === 'undefined') s.circuitRound = 1;
+                if (typeof s.circuitExIdx === 'undefined') s.circuitExIdx = 0;
+                return s;
+            } catch(e) { return DEFAULT_STORE(); }
+        }
+
+        let store = loadStore();
+
+        let liveRepCount = 12;
+        let circuitResting = false;
+        let circuitPaused = false;
+        let circuitTimerInterval = null;
+        let circuitSecondsLeft = 0;
+        let animationFrameCount = 0;
+        let animationInterval = null;
+
+        // =============================================
+        // MODAL PLATFORM INTERFACE DIALOGS
+        // =============================================
+        let _modalCallback = null;
+
+        function confirmAction(title, body, callback, isDanger = false) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').textContent = body;
+            const btn = document.getElementById('modalConfirm');
+            btn.className = isDanger ? 'modal-confirm danger' : 'modal-confirm';
+            _modalCallback = callback;
+            document.getElementById('modalOverlay').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('open');
+            _modalCallback = null;
+        }
+
+        function confirmModal() {
+            if (_modalCallback) _modalCallback();
+            closeModal();
+        }
+
+        document.getElementById('modalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        // =============================================
+        // TAB SWAP SYSTEM INTERACTIVE ROUTING
+        // =============================================
+        function switchView(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.bottom-nav .nav-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`view-${tabId}`).classList.add('active');
+            document.getElementById(`nav-${tabId}`).classList.add('active');
+            
+            if (tabId === 'workout') { startStickFigureAnimation(); } 
+            else { stopStickFigureAnimation(); }
+            
+            if (tabId === 'calendar') { renderCalendarGrid(); }
+        }
+
+        // =============================================
+        // CORE SCHEDULING MIDNIGHT ROLLOVER RESET
+        // =============================================
+        function checkMidnightRollover() {
+            const today = todayStr();
+            if (store.daily.date !== today) {
+                if (store.tdee) {
+                    const kcalIn = (store.daily.p * 4) + (store.daily.c * 4) + (store.daily.k || 0);
+                    const totalBurn = store.tdee + (store.daily.workoutBurn || 0);
+                    const net = kcalIn - totalBurn;
+                    if (net > 0) { store.totalSurplusKcal = (store.totalSurplusKcal || 0) + net; }
+                }
+
+                store.history.push({ ...store.daily });
+
+                CONFIG.streakItems.forEach(item => {
+                    if (!store.daily.streakLoggedToday[item.id]) { store.streaks[item.id] = 0; }
+                });
+
+                store.daily = { p: 0, c: 0, w: 0, k: 0, workoutBurn: 0, tasks: {}, streakLoggedToday: {}, date: today };
+                store.circuitRound = 1;
+                store.circuitExIdx = 0;
+                saveAndRender();
+                showToast('🌅 System executed midnight rollover.');
+            }
+        }
+        setInterval(checkMidnightRollover, 60000);
+
+        // =============================================
+        // MASTER INITIALIZATION SCHEME
+        // =============================================
+        function init() {
+            checkMidnightRollover();
+            document.getElementById('dateHeader').textContent = store.daily.date.toUpperCase();
+            setupDailyChecklist();
+            setupDisciplineLibrary();
+            initializeCircuitPlayer();
+            saveAndRender();
+        }
+
+        function setupDailyChecklist() {
+            document.getElementById('dailyChecklist').innerHTML =
+                CONFIG.dailyChecklistItems.map(item => `
+                    <div class="task-row" id="row-${item.id}" onclick="toggleDailyTask('${item.id}')">
+                        <span class="task-label">${item.label}</span>
+                        <div class="checkbox" id="check-${item.id}"></div>
+                    </div>
+                `).join('');
+        }
+
+        function setupStreakTrackers() {
+            document.getElementById('streakTrackers').innerHTML =
+                CONFIG.streakItems.map(item => {
+                    const loggedToday = store.daily.streakLoggedToday[item.id] || false;
+                    const currentStreak = store.streaks[item.id] || 0;
+                    const pct = Math.min((currentStreak / item.target) * 100, 100);
+                    const isComplete = currentStreak >= item.target;
+                    return `
+                        <div onclick="toggleStreak('${item.id}')"
+                             class="streak-card ${loggedToday ? (isComplete ? 'complete' : 'active') : ''}">
+                            <div class="streak-name">${item.label}</div>
+                            <div class="streak-val">${currentStreak}</div>
+                            <div class="streak-target">/ ${item.target} days</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill ${isComplete ? 'complete' : ''}" style="width:${pct}%"></div>
+                            </div>
+                        </div>`;
+                }).join('');
+        }
+
+        function setupDisciplineLibrary() {
+            document.getElementById('disciplineLibrary').innerHTML =
+                CONFIG.archiveItems.map(item => {
+                    const done = store.completedArchive[item.id] || false;
+                    return `
+                        <div class="archive-item ${done ? 'completed' : ''}">
+                            <div>
+                                <div class="archive-label">${item.label}</div>
+                                <div class="archive-target">Goal: ${item.target}</div>
+                            </div>
+                            ${done ? `<div class="btn-done done-state">✓ DONE</div>` : `<button onclick="logSingleDiscipline('${item.id}')" class="btn-done">DONE</button>`}
+                        </div>`;
+                }).join('');
+        }
+
+        function toggleDailyTask(id) {
+            store.daily.tasks[id] = !store.daily.tasks[id];
+            saveAndRender();
+        }
+
+        function toggleStreak(id) {
+            const alreadyLoggedToday = store.daily.streakLoggedToday[id] || false;
+            if (!alreadyLoggedToday) {
+                store.daily.streakLoggedToday[id] = true;
+                store.daily.tasks[id] = true;
+                store.streaks[id] = (store.streaks[id] || 0) + 1;
+                showToast(`🔥 Streak updated!`);
+            } else {
+                store.daily.streakLoggedToday[id] = false;
+                store.daily.tasks[id] = false;
+                store.streaks[id] = Math.max(0, (store.streaks[id] || 0) - 1);
+            }
+            saveAndRender();
+        }
+
+        function addFuel(p, c, w) {
+            store.daily.p += p; store.daily.c += c; store.daily.w += w;
+            saveAndRender();
+        }
+
+        function addCustomFuel() {
+            const pVal = parseFloat(document.getElementById('customP').value);
+            const cVal = parseFloat(document.getElementById('customC').value);
+            const kVal = parseFloat(document.getElementById('customKcal').value);
+
+            if (isNaN(pVal) && isNaN(cVal) && isNaN(kVal)) { showToast('Enter variables'); return; }
+            if (!isNaN(pVal)) store.daily.p += pVal;
+            if (!isNaN(cVal)) store.daily.c += cVal;
+            if (!isNaN(kVal)) store.daily.k += kVal;
+
+            document.getElementById('customP').value = '';
+            document.getElementById('customC').value = '';
+            document.getElementById('customKcal').value = '';
+            const btn = document.getElementById('mealBtn');
+            btn.textContent = '✓ SAVED';
+            setTimeout(() => btn.textContent = '+ ADD', 800);
+            saveAndRender();
+        }
+
+        function logTrade() {
+            const p = document.getElementById('pair').value.trim();
+            const r = parseFloat(document.getElementById('rr').value);
+            const res = document.getElementById('tradeResult').value;
+            if (!p || isNaN(r)) { showToast('Missing metrics'); return; }
+            store.trades.unshift({ p, r, res, d: todayStr() });
+            document.getElementById('pair').value = '';
+            document.getElementById('rr').value = '';
+            saveAndRender();
+            showToast('Trade executed ✓');
+        }
+
+        function deleteTrade(index) {
+            confirmAction('Delete this trade journal row?', 'This step resets tracking balance volume.', () => {
+                store.trades.splice(index, 1);
+                saveAndRender();
+            }, true);
+        }
+
+        function logSingleDiscipline(id) {
+            confirmAction('Confirm milestone fulfillment?', 'Increments system global execution metric values.', () => {
+                store.completedArchive[id] = true;
+                store.completedDisciplinesCount += 1;
+                saveAndRender();
+                showToast('💪 Mission archive logged!');
+            });
+        }
+
+        function saveTDEE() {
+            const val = parseFloat(document.getElementById('tdeeInput').value);
+            if (isNaN(val) || val < 1000 || val > 6000) { showToast('Invalid TDEE parameters'); return; }
+            store.tdee = val;
+            saveAndRender();
+            showToast('TDEE initialized ✓');
+        }
+
+        // =============================================
+        // HIGH-INTENSITY ARMS CIRCUIT ENGINE LOGIC
+        // =============================================
+        function initializeCircuitPlayer() {
+            if(store.circuitRound > 3) {
+                renderCircuitCompleteState();
+                return;
+            }
+            const currentEx = CONFIG.workoutCircuit[store.circuitExIdx];
+            liveRepCount = currentEx.defaultReps;
+            
+            document.getElementById('circuitRoundBadge').textContent = `ROUND ${store.circuitRound} / 3`;
+            document.getElementById('circuitExTitle').textContent = currentEx.name;
+            document.getElementById('circuitExAdvice').textContent = currentEx.advice;
+            document.getElementById('circuitLiveReps').textContent = liveRepCount;
+            
+            const nextEx = CONFIG.workoutCircuit[store.circuitExIdx + 1];
+            const nextLabel = document.getElementById('circuitNextUpLabel');
+            if (nextEx) {
+                nextLabel.textContent = `Next Up: ${nextEx.name}`;
+            } else if (store.circuitRound < 3) {
+                nextLabel.textContent = `Next Up: Round ${store.circuitRound + 1} Kickoff`;
+            } else {
+                nextLabel.textContent = `Next Up: Circuit Complete`;
+            }
+
+            document.getElementById('circuitTimerStrip').style.display = 'none';
+            document.getElementById('circuitActionBtn').innerText = "Complete Set";
+        }
+
+        function adjustLiveReps(amt) {
+            if(circuitResting || circuitPaused) return;
+            liveRepCount = Math.max(0, liveRepCount + amt);
+            document.getElementById('circuitLiveReps').textContent = liveRepCount;
+        }
+
+        function toggleCircuitPause() {
+            circuitPaused = !circuitPaused;
+            const btn = document.getElementById('circuitPauseBtn');
+            if(circuitPaused) {
+                btn.innerText = "Resume";
+                btn.style.background = "var(--blue)";
+            } else {
+                btn.innerText = "Pause";
+                btn.style.background = "#334155";
+            }
+        }
+
+        function handleCircuitAction() {
+            if(circuitPaused) return;
+            const currentEx = CONFIG.workoutCircuit[store.circuitExIdx];
+
+            if(!circuitResting) {
+                store.daily.workoutBurn += currentEx.kcalPerSet;
+                
+                circuitResting = true;
+                circuitSecondsLeft = 45;
+                document.getElementById('circuitTimerStrip').style.display = 'block';
+                document.getElementById('circuitTimerStrip').textContent = `REST IN PROGRESS: 45s`;
+                document.getElementById('circuitActionBtn').innerText = "Skip Rest";
+                
+                clearInterval(circuitTimerInterval);
+                circuitTimerInterval = setInterval(() => {
+                    if(!circuitPaused) {
+                        circuitSecondsLeft--;
+                        document.getElementById('circuitTimerStrip').textContent = `REST IN PROGRESS: ${circuitSecondsLeft}s`;
+                        if(circuitSecondsLeft <= 0) {
+                            clearInterval(circuitTimerInterval);
+                            executeCircuitTransition();
+                        }
+                    }
+                }, 1000);
+            } else {
+                clearInterval(circuitTimerInterval);
+                executeCircuitTransition();
+            }
+            saveAndRender();
+        }
+
+        function executeCircuitTransition() {
+            circuitResting = false;
+            if(store.circuitExIdx < CONFIG.workoutCircuit.length - 1) {
+                store.circuitExIdx++;
+            } else {
+                store.circuitExIdx = 0;
+                store.circuitRound++;
+            }
+            
+            if(store.circuitRound > 3) {
+                store.workoutDates[isoTodayStr()] = 'workout';
+                store.daily.tasks['calisthenics'] = true; 
+                renderCircuitCompleteState();
+                showToast("🔥 Wrist & Arm Routine Stack Complete!");
+            } else {
+                initializeCircuitPlayer();
+            }
+        }
+
+        function renderCircuitCompleteState() {
+            document.getElementById('circuitRoundBadge').textContent = "COMPLETED";
+            document.getElementById('circuitExTitle').textContent = "Ecosystem Sync Active";
+            document.getElementById('circuitExAdvice').textContent = "All wrist and arm volume calories parsed into surplus calculations.";
+            document.getElementById('circuitNextUpLabel').textContent = "Routine fully processed.";
+            document.getElementById('circuitTimerStrip').style.display = 'none';
+            document.getElementById('circuitActionBtn').innerText = "Reset Circuit Execution";
+            document.getElementById('circuitActionBtn').onclick = () => {
+                store.circuitRound = 1; store.circuitExIdx = 0;
+                document.getElementById('circuitActionBtn').onclick = handleCircuitAction;
+                initializeCircuitPlayer();
+                saveAndRender();
+            };
+        }
+
+        // =============================================
+        // LIGHTWEIGHT SVG CORE STICK GRAPHICS ANIMATOR
+        // =============================================
+        function startStickFigureAnimation() {
+            clearInterval(animationInterval);
+            animationFrameCount = 0;
+            
+            const stickArm = document.getElementById('stick-arm');
+            const stickForearm = document.getElementById('stick-forearm');
+            const stickBodyGroup = document.getElementById('stick-body-group');
+            
+            animationInterval = setInterval(() => {
+                if(circuitPaused || circuitResting || store.circuitRound > 3) return;
+                
+                animationFrameCount++;
+                const currentEx = CONFIG.workoutCircuit[store.circuitExIdx];
+                const type = currentEx ? currentEx.type : 'bicep';
+                
+                const progress = (Math.sin(animationFrameCount * 0.15) + 1) / 2; 
+                const wristProgress = (Math.sin(animationFrameCount * 0.30) + 1) / 2;
+
+                stickBodyGroup.style.transform = 'rotate(0deg) translate(0px, 0px)';
+
+                if (type === 'bicep' || type === 'hammer') {
+                    const armRotation = -20 + (progress * 15);
+                    const forearmRotation = -85 + (progress * 80);
+                    stickArm.style.transform = `rotate(${armRotation}deg)`;
+                    stickForearm.style.transform = `rotate(${forearmRotation}deg)`;
+                } 
+                else if (type === 'tricep') {
+                    const armRotation = -110 + (progress * 40);
+                    const forearmRotation = -50 - (progress * 50);
+                    stickArm.style.transform = `rotate(${armRotation}deg)`;
+                    stickForearm.style.transform = `rotate(${forearmRotation}deg)`;
+                }
+                else if (type === 'wrist_curl') {
+                    stickArm.style.transform = 'rotate(10deg)';
+                    const forearmRotation = -70 + (wristProgress * 25);
+                    stickForearm.style.transform = `rotate(${forearmRotation}deg)`;
+                }
+                else if (type === 'wrist_ext') {
+                    stickArm.style.transform = 'rotate(10deg)';
+                    const forearmRotation = -45 - (wristProgress * 25);
+                    stickForearm.style.transform = `rotate(${forearmRotation}deg)`;
+                }
+            }, 50);
+        }
+
+        function stopStickFigureAnimation() {
+            clearInterval(animationInterval);
+        }
+
+        // =============================================
+        // ADVANCED ECOSYSTEM INTEGRATED CALENDAR 
+        // =============================================
+        function renderCalendarGrid() {
+            const container = document.getElementById('calendarGridContainer');
+            container.innerHTML = '';
+            
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = d.getMonth();
+            
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calendarMonthYear').textContent = `${monthNames[month].toUpperCase()} ${year}`;
+            
+            const daysInWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            daysInWeek.forEach(day => {
+                const el = document.createElement('div');
+                el.className = 'calendar-day-label';
+                el.textContent = day;
+                container.appendChild(el);
+            });
+            
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            
+            for(let i=0; i<firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-cell empty';
+                container.appendChild(emptyCell);
+            }
+            
+            const todayIso = isoTodayStr();
+            const todayDateNum = d.getDate();
+            
+            for(let day=1; day<=totalDays; day++) {
+                const dateIsoStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                cell.textContent = day;
+                
+                if (day === todayDateNum && month === new Date().getMonth() && year === new Date().getFullYear()) {
+                    cell.classList.add('current-day');
+                }
+                
+                const dateState = store.workoutDates[dateIsoStr];
+                if (dateState === 'workout') { cell.classList.add('workout-done'); } 
+                else if (dateState === 'rest') { cell.classList.add('rest-day'); }
+                
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                cell.appendChild(dot);
+                
+                cell.onclick = () => toggleCalendarCellDate(dateIsoStr);
+                container.appendChild(cell);
+            }
+        }
+
+        function toggleCalendarCellDate(dateStr) {
+            const current = store.workoutDates[dateStr];
+            if (!current) { store.workoutDates[dateStr] = 'workout'; } 
+            else if (current === 'workout') { store.workoutDates[dateStr] = 'rest'; } 
+            else { delete store.workoutDates[dateStr]; }
+            saveAndRender();
+            renderCalendarGrid();
+        }
+
+        function markRestDay() {
+            store.workoutDates[isoTodayStr()] = 'rest';
+            saveAndRender();
+            renderCalendarGrid();
+            showToast("📅 Today logged as a Rest Day.");
+        }
+
+        // =============================================
+        // ADVANCED SURPLUS ECOSYSTEM INTERACTIVE LOOKUP
+        // =============================================
+        const KCAL_PER_KG = 7700;
+        const GOAL_KG = 10;
+        const GOAL_KCAL = KCAL_PER_KG * GOAL_KG;
+
+        function renderSurplusTracker() {
+            const p = store.daily.p || 0;
+            const c = store.daily.c || 0;
+            const k = store.daily.k || 0;
+            const workoutKcal = store.daily.workoutBurn || 0;
+            
+            const kcalIn = Math.round((p * 4) + (c * 4)) + k;
+            const tdee = store.tdee;
+            
+            const totalBurn = tdee ? (tdee + workoutKcal) : null;
+            const net = tdee ? (kcalIn - totalBurn) : null;
+
+            if (tdee) {
+                const tdeeEl = document.getElementById('tdeeInput');
+                if (tdeeEl && !tdeeEl.value) tdeeEl.value = tdee;
+            }
+
+            document.getElementById('kcalIn').textContent = kcalIn;
+            document.getElementById('kcalBurn').textContent = totalBurn ? totalBurn : '—';
+
+            const netEl = document.getElementById('kcalNet');
+            const surplusLabel = document.getElementById('surplusLabel');
+            const subtextEl = document.getElementById('workout-burn-subtext');
+
+            if (workoutKcal > 0) {
+                subtextEl.style.display = 'block';
+                subtextEl.textContent = `Includes +${workoutKcal} kcal workout expansion burn`;
+            } else {
+                subtextEl.style.display = 'none';
+            }
+
+            if (net !== null) {
+                netEl.textContent = (net >= 0 ? '+' : '') + net;
+                netEl.style.color = net >= 0 ? 'var(--emerald)' : 'var(--red)';
+                surplusLabel.textContent = net >= 0 ? '✅ SURPLUS' : '⚠️ DEFICIT';
+                surplusLabel.style.color = net >= 0 ? 'var(--emerald)' : 'var(--red)';
+            } else {
+                netEl.textContent = '—';
+                netEl.style.color = 'var(--muted)';
+                surplusLabel.textContent = 'Set TDEE above';
+                surplusLabel.style.color = 'var(--muted)';
+            }
+
+            const todayContrib = (net !== null && net > 0) ? net : 0;
+            const allTimeSurplus = (store.totalSurplusKcal || 0) + todayContrib;
+            const estKg = allTimeSurplus / KCAL_PER_KG;
+            const pct = Math.min((allTimeSurplus / GOAL_KCAL) * 100, 100);
+
+            document.getElementById('totalSurplusKcal').textContent = Math.round(allTimeSurplus).toLocaleString();
+            document.getElementById('estKgGained').textContent = estKg.toFixed(2);
+            document.getElementById('surplusProgressFill').style.width = pct + '%';
+            document.getElementById('surplusPctLabel').textContent = `${estKg.toFixed(2)}kg / 10kg (${pct.toFixed(1)}%)`;
+
+            document.getElementById('surplusProgressFill').style.background = pct >= 100 ? 'var(--emerald)' : 'var(--yellow)';
+        }
+
+        function resetNutrition() {
+            store.daily.p = 0; store.daily.c = 0; store.daily.w = 0; store.daily.k = 0;
+            saveAndRender();
+            showToast('Nutrition logs cleared.');
+        }
+
+        function resetDay() {
+            store.daily = { p: 0, c: 0, w: 0, k: 0, workoutBurn: 0, tasks: {}, streakLoggedToday: { ...store.daily.streakLoggedToday }, date: todayStr() };
+            store.circuitRound = 1; store.circuitExIdx = 0;
+            initializeCircuitPlayer();
+            saveAndRender();
+            showToast('Day structure reset.');
+        }
+
+        // =============================================
+        // BACKUP MATRIX INFRASTRUCTURE
+        // =============================================
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(store, null, 2));
+            const a = document.createElement('a');
+            a.setAttribute("href", dataStr);
+            a.setAttribute("download", `command_center_backup_${todayStr().replace(/\//g,'-')}.json`);
+            document.body.appendChild(a);
+            a.click(); a.remove();
+            showToast('Backup saved 💾');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!imported.daily || !imported.trades) {
+                        showToast('❌ Invalid system backup payload');
+                        return;
+                    }
+                    confirmAction('Import backup payload?', 'This completely rewrites live system states.', () => {
+                        store = imported;
+                        if (!store.daily.streakLoggedToday) store.daily.streakLoggedToday = {};
+                        if (!store.completedArchive) store.completedArchive = {};
+                        if (!store.workoutDates) store.workoutDates = {};
+                        saveAndRender();
+                        setupDisciplineLibrary();
+                        initializeCircuitPlayer();
+                        showToast('✅ Ecosystem fully restored!');
+                    }, false);
+                } catch(err) { showToast('❌ Configuration parse crash'); }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('execOpsData_v3', JSON.stringify(store));
+            renderUI();
+        }
+
+        function renderUI() {
+            CONFIG.dailyChecklistItems.forEach(item => {
+                const row = document.getElementById(`row-${item.id}`);
+                const box = document.getElementById(`check-${item.id}`);
+                const done = store.daily.tasks[item.id] || false;
+                if (!row || !box) return;
+                row.className = done ? 'task-row done' : 'task-row';
+                box.className = done ? 'checkbox checked' : 'checkbox';
+                box.textContent = done ? '✓' : '';
+            });
+
+            setupStreakTrackers();
+
+            const p = store.daily.p || 0;
+            const c = store.daily.c || 0;
+            const w = store.daily.w || 0;
+            const k = store.daily.k || 0;
+
+            const pEl = document.getElementById('pDisp');
+            pEl.textContent = parseFloat(p.toFixed(1));
+            pEl.className = 'macro-val' + (p < CONFIG.proteinGoal ? ' warn' : ' ok');
+
+            const wEl = document.getElementById('wDisp');
+            wEl.textContent = (w / 1000).toFixed(1);
+            wEl.className = 'macro-val' + (w < CONFIG.waterGoal ? ' warn' : ' blue');
+
+            document.getElementById('cDisp').textContent = parseFloat(c.toFixed(1));
+
+            const kcalToday = Math.round((p * 4) + (c * 4)) + k;
+            document.getElementById('kcalInlineDisp').textContent = kcalToday.toLocaleString() + ' kcal';
+
+            document.getElementById('tradeLog').innerHTML = store.trades.length === 0
+                ? `<p style="text-align:center; color: var(--muted); font-size: 0.7rem; font-family: monospace; padding: 1rem;">No trades logged yet</p>`
+                : store.trades.map((t, i) => {
+                    const cls = t.res === 'WIN' ? 'win' : (t.res === 'BE' ? 'be' : 'loss');
+                    return `<div class="trade-entry ${cls}">
+                        <div>
+                            <span class="trade-pair">${t.p}</span>
+                            <span style="color:var(--muted);font-size:0.65rem;"> ${t.r.toFixed(1)}R · ${t.d}</span>
+                            <br>
+                            <span class="trade-result ${cls}">${t.res}</span>
+                        </div>
+                        <button class="trade-delete" onclick="deleteTrade(${i})">✕</button>
+                    </div>`;
+                }).join('');
+
+            const wins = store.trades.filter(t => t.res === 'WIN').length;
+            document.getElementById('winRate').textContent = store.trades.length > 0 ? Math.round((wins / store.trades.length) * 100) + '%' : '0%';
+            document.getElementById('totalDisciplineDays').textContent = store.completedDisciplinesCount;
+
+            renderSurplusTracker();
+        }
+
+        init();
+    </script>
+</body>
+</html>
